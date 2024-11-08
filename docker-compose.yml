@@ -14,7 +14,7 @@ services:
       context: ./backend # Path to the backend directory
       dockerfile: Dockerfile
     ports:
-      - "5000:5000" # Expose port 5000 of the container to port 5000 on the host
+      - "5001:5001" # Expose port 5000 of the container to port 5000 on the host
     environment:
       - NODE_ENV=production
 

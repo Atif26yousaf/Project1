@@ -1,49 +1,20 @@
-name: CI/CD Pipeline
+version: '3.8'
+services:
+  frontend:
+    build:
+      context: ./frontend # Path to the frontend directory
+      dockerfile: Dockerfile
+    ports:
+      - "3000:80"  # Expose port 80 of the container to port 3000 on the host
+    depends_on:
+      - backend  # Ensure the backend starts before the frontend
 
-on:
-  push:
-    branches:
-      - main
-
-jobs:
-  build:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v1
-
-      - name: Log in to Docker Hub
-        uses: docker/login-action@v1
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-
-      - name: Build and push frontend image
-        run: |
-          docker build -t yourdockerhubusername/frontend:latest -f frontend/Dockerfile .
-          docker push yourdockerhubusername/frontend:latest
-
-      - name: Build and push backend image
-        run: |
-          docker build -t yourdockerhubusername/backend:latest -f backend/Dockerfile .
-          docker push yourdockerhubusername/backend:latest
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - name: Deploy to Contabo VPS
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.CONTABO_HOST }}
-          username: ${{ secrets.CONTABO_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: |
-            docker pull yourdockerhubusername/frontend:latest
-            docker pull yourdockerhubusername/backend:latest
-            docker-compose -f /path/to/your/docker-compose.yml up -d
+  backend:
+    build:
+      context: ./backend # Path to the backend directory
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000" # Expose port 5000 of the container to port 5000 on the host
+    environment:
+      - NODE_ENV=production
 

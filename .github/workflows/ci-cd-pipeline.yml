@@ -21,44 +21,50 @@ jobs:
       # Build the frontend Docker image
       - name: Build frontend image
         run: |
-          docker build -t frontend:latest -f frontend/Dockerfile .
+          cd frontend
+          docker build -t frontend:latest .
 
       # Build the backend Docker image
       - name: Build backend image
         run: |
-          docker build -t backend:latest -f backend/Dockerfile .
+          cd backend
+          docker build -t backend:latest .
 
-  # Job 2: Deploy to First-Step (Frontend) Environment
+  # Job 2: Deploy to Frontend Environment (First-Step)
   deploy-first-step:
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - name: Set up SSH key for authentication
-        uses: webfactory/ssh-agent@v0.5.3
-        with:
-          ssh-private-key: ${{ secrets.SSH_KEY }}  # Load SSH key from GitHub secrets
-
       - name: Deploy frontend to First-Step environment
-        run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.FIRST_STEP_USER }}@${{ secrets.FIRST_STEP_HOST }} \
-            "docker pull frontend:latest && \
-             cd /path/to/your/project && \
-             docker-compose -f docker-compose.frontend.yml up -d"
+        uses: appleboy/ssh-action@v0.1.6
+        with:
+          host: ${{ secrets.FIRST_STEP_HOST }}
+          username: ${{ secrets.FIRST_STEP_USER }}
+          key: ${{ secrets.SSH_KEY }}  # SSH Key stored in GitHub Secrets
+          script: |
+            # SSH into First-Step server and build the frontend Docker image
+            docker pull frontend:latest
+            # Change to the directory where docker-compose.frontend.yml is located
+            cd /home/atif/Project/frontend
+            # Use Docker Compose to bring up the frontend service
+            docker-compose -f docker-compose.frontend.yml up -d
 
-  # Job 3: Deploy to Second-Step (Backend) Environment
+  # Job 3: Deploy to Backend Environment (Second-Step)
   deploy-second-step:
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - name: Set up SSH key for authentication
-        uses: webfactory/ssh-agent@v0.5.3
-        with:
-          ssh-private-key: ${{ secrets.SSH_KEY }}  # Load SSH key from GitHub secrets
-
       - name: Deploy backend to Second-Step environment
-        run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.SECOND_STEP_USER }}@${{ secrets.SECOND_STEP_HOST }} \
-            "docker pull backend:latest && \
-             cd /path/to/your/project && \
-             docker-compose -f docker-compose.backend.yml up -d"
+        uses: appleboy/ssh-action@v0.1.6
+        with:
+          host: ${{ secrets.SECOND_STEP_HOST }}
+          username: ${{ secrets.SECOND_STEP_USER }}
+          key: ${{ secrets.SSH_KEY }}  # SSH Key stored in GitHub Secrets
+          script: |
+            # SSH into Second-Step server and build the backend Docker image
+            docker pull backend:latest
+            # Change to the directory where docker-compose.backend.yml is located
+            cd /home/atif/Project/backend 
+            # Use Docker Compose to bring up the backend service
+            docker-compose -f docker-compose.backend.yml up -d
 

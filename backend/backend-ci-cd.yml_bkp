@@ -1,4 +1,4 @@
-name: CI/CD Pipeline
+name: CI/CD Pipeline 
 
 on:
   push:
@@ -51,11 +51,8 @@ jobs:
           username: ${{ secrets.CONTABO_USER }}
           key: ${{ secrets.SSH_KEY }}
           script: |
-            # Pull the frontend image
             docker pull frontend:latest
-            # Change to the directory where docker-compose file is located
             cd /home/atif/Project/frontend  # Adjust if this is not the correct path
-            # Use Docker Compose to bring up the frontend service
             docker-compose -f docker-compose.frontend.yml up -d
 
   # Job 4: Deploy Backend to Contabo VPS
@@ -70,10 +67,7 @@ jobs:
           username: ${{ secrets.CONTABO_USER }}
           key: ${{ secrets.SSH_KEY }}
           script: |
-            # Pull the backend image
             docker pull backend:latest
-            # Change to the directory where docker-compose file is located
-            cd /home/atif/Project/backend  # Adjusted path for the backend location
-            # Use Docker Compose to bring up the backend service
+            cd /home/atif/Project/backend  # Adjust if this is not the correct path
             docker-compose -f docker-compose.backend.yml up -d
 

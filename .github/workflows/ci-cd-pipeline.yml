@@ -1,0 +1,64 @@
+name: CI/CD Pipeline
+
+# Trigger the workflow on every push to the 'main' branch
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  # Job 1: Build Docker Images for Frontend and Backend
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout the repository code
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      # Set up Docker Buildx (for multi-platform support)
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      # Log in to Docker Hub (for pushing images)
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      # Build and push the frontend Docker image
+      - name: Build and push frontend image
+        run: |
+          docker build -t yourdockerhubusername/frontend:latest -f frontend/Dockerfile .
+          docker push yourdockerhubusername/frontend:latest
+
+      # Build and push the backend Docker image
+      - name: Build and push backend image
+        run: |
+          docker build -t yourdockerhubusername/backend:latest -f backend/Dockerfile .
+          docker push yourdockerhubusername/backend:latest
+
+  # Job 2: Deploy to Contabo VPS (after successful build)
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      # SSH into Contabo VPS and pull the latest Docker images
+      - name: Deploy to Contabo VPS
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.CONTABO_HOST }}
+          username: ${{ secrets.CONTABO_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            # Pull the latest Docker images
+            docker pull yourdockerhubusername/frontend:latest
+            docker pull yourdockerhubusername/backend:latest
+
+            # Navigate to your project directory
+            cd /path/to/your/project
+
+            # Set up and run Docker Compose to start the services
+            docker-compose -f docker-compose.yml up -d
+

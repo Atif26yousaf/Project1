@@ -39,7 +39,7 @@ jobs:
 
   # Job 2: Deploy to First-Step (Frontend) Environment
   deploy-first-step:
-    needs: build  # Ensures this job runs after the build job completes successfully
+    needs: build
     runs-on: ubuntu-latest
     steps:
       - name: Deploy frontend to First-Step environment
@@ -51,12 +51,12 @@ jobs:
           script: |
             # SSH into First-Step server and pull the latest Docker image for frontend
             docker pull yourdockerhubusername/frontend:latest
-            cd /path/to/your/project  # Ensure this path matches your actual project structure
+            cd /path/to/your/project
             docker-compose -f docker-compose.frontend.yml up -d
 
   # Job 3: Deploy to Second-Step (Backend) Environment
   deploy-second-step:
-    needs: build  # Ensures this job runs after the build job completes successfully
+    needs: build
     runs-on: ubuntu-latest
     steps:
       - name: Deploy backend to Second-Step environment
@@ -68,6 +68,6 @@ jobs:
           script: |
             # SSH into Second-Step server and pull the latest Docker image for backend
             docker pull yourdockerhubusername/backend:latest
-            cd /path/to/your/project  # Ensure this path matches your actual project structure
+            cd /path/to/your/project
             docker-compose -f docker-compose.backend.yml up -d
 

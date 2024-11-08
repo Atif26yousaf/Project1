@@ -3,20 +3,18 @@ name: CI/CD Pipeline
 on:
   push:
     branches:
-      - main
+      - main  # Trigger workflow on pushes to the 'main' branch
 
 jobs:
+  # Job 1: Build Docker Images for Frontend and Backend
   build:
-    name: Build Docker Images
     runs-on: ubuntu-latest
-    environment: First-Step
 
     steps:
-      # Check out the repository code
       - name: Checkout code
         uses: actions/checkout@v2
 
-      # Set up Docker Buildx for multi-platform builds
+      # Set up Docker Buildx
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
 
@@ -27,38 +25,49 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      # Build and push frontend image
+      # Build and push the frontend Docker image (First-Step environment)
       - name: Build and push frontend image
         run: |
           docker build -t yourdockerhubusername/frontend:latest -f frontend/Dockerfile .
           docker push yourdockerhubusername/frontend:latest
 
-      # Build and push backend image
+      # Build and push the backend Docker image (Second-Step environment)
       - name: Build and push backend image
         run: |
           docker build -t yourdockerhubusername/backend:latest -f backend/Dockerfile .
           docker push yourdockerhubusername/backend:latest
 
-  deploy:
-    name: Deploy to Contabo VPS
+  # Job 2: Deploy to First-Step (Frontend) Environment
+  deploy-first-step:
     needs: build
     runs-on: ubuntu-latest
-    environment: Second-Step
-
     steps:
-      # SSH into Contabo VPS and deploy
-      - name: Deploy to Contabo VPS
-        uses: appleboy/ssh-action@master
+      - name: Deploy frontend to First-Step environment
+        uses: appleboy/ssh-action@v0.1.6
         with:
-          host: ${{ secrets.CONTABO_HOST }}
-          username: ${{ secrets.CONTABO_USER }}
+          host: ${{ secrets.FIRST_STEP_HOST }}
+          username: ${{ secrets.FIRST_STEP_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            # Pull latest Docker images
+            # SSH into First-Step server and pull the latest Docker image for frontend
             docker pull yourdockerhubusername/frontend:latest
-            docker pull yourdockerhubusername/backend:latest
-
-            # Start services with Docker Compose
             cd /path/to/your/project
-            docker-compose up -d
+            docker-compose -f docker-compose.frontend.yml up -d
+
+  # Job 3: Deploy to Second-Step (Backend) Environment
+  deploy-second-step:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy backend to Second-Step environment
+        uses: appleboy/ssh-action@v0.1.6
+        with:
+          host: ${{ secrets.SECOND_STEP_HOST }}
+          username: ${{ secrets.SECOND_STEP_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            # SSH into Second-Step server and pull the latest Docker image for backend
+            docker pull yourdockerhubusername/backend:latest
+            cd /path/to/your/project
+            docker-compose -f docker-compose.backend.yml up -d
 

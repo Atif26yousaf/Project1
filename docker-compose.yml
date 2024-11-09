@@ -1,0 +1,20 @@
+version: '3.8'
+services:
+  frontend:
+    build:
+      context: ./frontend # Path to the frontend directory
+      dockerfile: Dockerfile
+    ports:
+      - "3000:80"  # Expose port 80 of the container to port 3000 on the host
+    depends_on:
+      - backend  # Ensure the backend starts before the frontend
+
+  backend:
+    build:
+      context: ./backend # Path to the backend directory
+      dockerfile: Dockerfile
+    ports:
+      - "5001:5001" # Expose port 5000 of the container to port 5000 on the host
+    environment:
+      - NODE_ENV=production
+

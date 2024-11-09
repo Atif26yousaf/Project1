@@ -1,0 +1,70 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main  # Trigger workflow on pushes to the 'main' branch
+
+jobs:
+  # Job 1: Build Docker Images for Frontend and Backend
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      # Set up Docker Buildx
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      # Build the frontend Docker image
+      - name: Build frontend image
+        run: |
+          cd frontend
+          docker build -t frontend:latest .
+
+      # Build the backend Docker image
+      - name: Build backend image
+        run: |
+          cd backend
+          docker build -t backend:latest .
+
+  # Job 2: Deploy to Frontend Environment (First-Step)
+  deploy-first-step:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy frontend to First-Step environment
+        uses: appleboy/ssh-action@v0.1.6
+        with:
+          host: ${{ secrets.FIRST_STEP_HOST }}
+          username: ${{ secrets.FIRST_STEP_USER }}
+          key: ${{ secrets.SSH_KEY }}  # SSH Key stored in GitHub Secrets
+          script: |
+            # SSH into First-Step server and build the frontend Docker image
+            docker pull frontend:latest
+            # Change to the directory where docker-compose.frontend.yml is located
+            cd /home/atif/Project/frontend
+            # Use Docker Compose to bring up the frontend service
+            docker-compose -f frontend-ci-cd.yml up -d
+
+  # Job 3: Deploy to Backend Environment (Second-Step)
+  deploy-second-step:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy backend to Second-Step environment
+        uses: appleboy/ssh-action@v0.1.6
+        with:
+          host: ${{ secrets.SECOND_STEP_HOST }}
+          username: ${{ secrets.SECOND_STEP_USER }}
+          key: ${{ secrets.SSH_KEY }}  # SSH Key stored in GitHub Secrets
+          script: |
+            # SSH into Second-Step server and build the backend Docker image
+            docker pull backend:latest
+            # Change to the directory where docker-compose.backend.yml is located
+            cd /home/atif/Project/backend 
+            # Use Docker Compose to bring up the backend service
+            docker-compose -f backend-ci-cd.yml up -d
+
